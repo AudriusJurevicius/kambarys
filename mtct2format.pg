@@ -1,22 +1,21 @@
 let
     Source = #"Data Pull Query (External)",
-    #"Changed Type" = Table.TransformColumnTypes(Source,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
-    #"Sorted Rows" = Table.Sort(#"Changed Type",{{"MTCT Start Time", Order.Descending}}),
-    #"Added UK Start" = Table.AddColumn(#"Sorted Rows", "UK Datetime", each [MTCT Start Time]+#duration(0,5,0,0), type datetime),
-    #"Added UK LR" = Table.AddColumn(#"Added UK Start", "Late Reg", each if [Current Status] = "Tournament Finished" then [Registration End Time]+#duration(0,5,0,0) else "", type datetime
-),
-    #"Added UK Finish" = Table.AddColumn(#"Added UK LR", "Finish Time", each if [Current Status]="Tournament Finished" then [MTCT End Time]+#duration(0,5,0,0) else "", type datetime),
-    #"Added DBI Count" = Table.AddColumn(#"Added UK Finish", "DBI", each if [Current Status]="Tournament Finished" then [#"# of seats Direct Buyin (Cash Only)"]+[#"# of seats T$ And Cash"]+[#"# of seats pure T$ Buyin"] else 0, Int64.Type),
-    #"Added Qual Count" = Table.AddColumn(#"Added DBI Count", "Quals", each if [Current Status]="Tournament Finished" then [#"# Registered"]-[DBI] else 0, Int64.Type),
-    #"Renamed Columns1" = Table.RenameColumns(#"Added Qual Count",{{"Accumulated Prizepool", "Collected"}, {"Total cost", "Overlay"}, {"# of seats for Qualifier(GPP)", "Seats Made"}, {"Guaranteed Amount", "Gtd"}, {"# of Re-Entries", "Res"}, {"# Registered", "Entries"}, {"# Un-Registered", "Unreg"}}),
-    #"Added Total Fees" = Table.AddColumn(#"Renamed Columns1", "Total Fees", each if [Current Status]="Tournament Finished" then [Entries]*[MTCT Fee] else 0, type number),
-    #"Added NET" = Table.AddColumn(#"Added Total Fees", "NET", each if [Current Status]="Tournament Finished" then [Total Fees]-[Overlay] else 0, type number),
-    #"Inserted Date" = Table.AddColumn(#"Added NET", "Date", each DateTime.Date([UK Datetime]), type date),
-    #"Added UK Time" = Table.AddColumn(#"Inserted Date", "Start", each #time(Time.Hour([UK Datetime]),Time.Minute([UK Datetime]),0), type time),
-    #"Replaced Value" = Table.ReplaceValue(#"Added UK Time","Insufficient Player Cancel","DNS",Replacer.ReplaceText,{"Current Status"}),
-    #"Duplicated Column" = Table.DuplicateColumn(#"Replaced Value", "UK Datetime", "UK Time"),
-    #"Renamed Columns" = Table.RenameColumns(#"Duplicated Column",{{"UK Datetime", "UK Date"}}),
-    #"Reordered Columns1" = Table.ReorderColumns(#"Renamed Columns",{"Date", "Start", "MTCT Id", "MTCT Name", "UK Date", "UK Time", "Late Reg", "Finish Time", "MTCT Buy In", "MTCT Fee", "Bounty", "Gtd", "Entries", "DBI", "Quals", "Res", "Collected", "Overlay", "Total Fees", "NET", "Seats Made", "Current Status", "Unreg", "Phased Flighted", "Default Chips"}),
-    #"Removed Other Columns2" = Table.SelectColumns(#"Reordered Columns1",{"MTCT Id", "MTCT Name", "UK Date", "UK Time", "Late Reg", "Finish Time", "MTCT Buy In", "MTCT Fee", "Bounty", "Gtd", "Entries", "DBI", "Quals", "Res", "Collected", "Overlay", "Total Fees", "NET", "Seats Made", "Current Status", "Unreg", "Phased Flighted", "Default Chips"})
+    changedType = Table.TransformColumnTypes(Source,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
+    sortedRows = Table.Sort(changedType,{{"MTCT Start Time", Order.Descending}}),
+    addedUkStart = Table.AddColumn(sortedRows, "UK Datetime", each [MTCT Start Time]+#duration(0,5,0,0), type datetime),
+    AddedUkLr = Table.AddColumn(addedUkStart, "Late Reg", each if [Current Status] = "Tournament Finished" then [Registration End Time]+#duration(0,5,0,0) else "", type datetime),
+    AddedUkFinnish = Table.AddColumn(AddedUkLr, "Finish Time", each if [Current Status]="Tournament Finished" then [MTCT End Time]+#duration(0,5,0,0) else "", type datetime),
+    AddedDbis = Table.AddColumn(AddedUkFinnish, "DBI", each if [Current Status]="Tournament Finished" then [#"# of seats Direct Buyin (Cash Only)"]+[#"# of seats T$ And Cash"]+[#"# of seats pure T$ Buyin"] else 0, Int64.Type),
+    AddedQuals = Table.AddColumn(AddedDbis, "Quals", each if [Current Status]="Tournament Finished" then [#"# Registered"]-[DBI] else 0, Int64.Type),
+    RenamingCols = Table.RenameColumns(AddedQuals,{{"Accumulated Prizepool", "Collected"}, {"Total cost", "Overlay"}, {"# of seats for Qualifier(GPP)", "Seats Made"}, {"Guaranteed Amount", "Gtd"}, {"# of Re-Entries", "Res"}, {"# Registered", "Entries"}, {"# Un-Registered", "Unreg"}}),
+    CalcFees = Table.AddColumn(RenamingCols, "Total Fees", each if [Current Status]="Tournament Finished" then [Entries]*[MTCT Fee] else 0, type number),
+    CalcNet = Table.AddColumn(CalcFees, "NET", each if [Current Status]="Tournament Finished" then [Total Fees]-[Overlay] else 0, type number),
+    AddedDate = Table.AddColumn(CalcNet, "Date", each DateTime.Date([UK Datetime]), type date),
+    AddedUkTime = Table.AddColumn(AddedDate, "Start", each #time(Time.Hour([UK Datetime]),Time.Minute([UK Datetime]),0), type time),
+    ReplacedValues = Table.ReplaceValue(AddedUkTime,"Insufficient Player Cancel","DNS",Replacer.ReplaceText,{"Current Status"}),
+    DuplicateUkTime = Table.DuplicateColumn(ReplacedValues, "UK Datetime", "UK Time"),
+    RenamedCols = Table.RenameColumns(DuplicateUkTime,{{"UK Datetime", "UK Date"}}),
+    ReorderedCols = Table.ReorderColumns(RenamedCols,{"Date", "Start", "MTCT Id", "MTCT Name", "UK Date", "UK Time", "Late Reg", "Finish Time", "MTCT Buy In", "MTCT Fee", "Bounty", "Gtd", "Entries", "DBI", "Quals", "Res", "Collected", "Overlay", "Total Fees", "NET", "Seats Made", "Current Status", "Unreg", "Phased Flighted", "Default Chips"}),
+    RemovedOtherCols = Table.SelectColumns(ReorderedCols,{"MTCT Id", "MTCT Name", "UK Date", "UK Time", "Late Reg", "Finish Time", "MTCT Buy In", "MTCT Fee", "Bounty", "Gtd", "Entries", "DBI", "Quals", "Res", "Collected", "Overlay", "Total Fees", "NET", "Seats Made", "Current Status", "Unreg", "Phased Flighted", "Default Chips"})
 in
-    #"Removed Other Columns2"
+    RemovedOtherCols
