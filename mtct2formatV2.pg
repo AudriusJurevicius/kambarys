@@ -1,0 +1,5 @@
+let
+	Source = #"Data Pull Query (External)",
+	changingSpecificTypes = Table.TransformColumnTypes(Source,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
+in
+	changingSpecificTypes
