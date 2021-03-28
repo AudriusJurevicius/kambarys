@@ -2,8 +2,8 @@ let
 	Source = #"Data Pull Query (External)",
     FilterCurrentYear = Table.SelectRows(Source, each Date.IsInCurrentYear([MTCT Start Time])),
 	changingSpecificTypes = Table.TransformColumnTypes(FilterCurrentYear,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
-	addingUkStartTime = Table.AddColumn(changingSpecificTypes, "UK Start Time", each [MTCT Start Time]+#duration(0,5,0,0), type datetime),
-    removedOtherColumns = Table.SelectColumns(addingUkStartTime,{"UK Start Time", "MTCT Id", "MTCT Name"})
+	addingUkStartTime = Table.AddColumn(changingSpecificTypes, "UK Start Time", each if [MTCT Start Time] > DateTime.From("15/02/2021 10:40") and [MTCT Start Time] < DateTime.From("23/02/2021 21:40") then [MTCT Start Time]+#duration(0,5,0,0) else [MTCT Start Time]+#duration(0,4,0,0), type datetime),
+    removedOtherColumns = Table.SelectColumns(addingUkStartTime,{"UK Start Time", "MTCT Id", "MTCT Name", "MTCT Start Time"})
 	
 in
 	removedOtherColumns
