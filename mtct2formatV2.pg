@@ -1,5 +1,7 @@
 let
 	Source = #"Data Pull Query (External)",
 	changingSpecificTypes = Table.TransformColumnTypes(Source,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
+	addingUkStartTime = Table.AddColumn(changingSpecificTypes, "UK Start Time", each [MTCT Start Time]+#duration(0,5,0,0), type time)
+	
 in
-	changingSpecificTypes
+	addingUkStartTime
