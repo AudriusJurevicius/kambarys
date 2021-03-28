@@ -1,8 +1,9 @@
 let
 	Source = #"Data Pull Query (External)",
-	changingSpecificTypes = Table.TransformColumnTypes(Source,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
+    FilterCurrentYear = Table.SelectRows(Source, each Date.IsInCurrentYear([MTCT Start Time])),
+	changingSpecificTypes = Table.TransformColumnTypes(FilterCurrentYear,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
 	addingUkStartTime = Table.AddColumn(changingSpecificTypes, "UK Start Time", each [MTCT Start Time]+#duration(0,5,0,0), type datetime),
-    #"Removed Other Columns" = Table.SelectColumns(addingUkStartTime,{"UK Start Time", "MTCT Id", "MTCT Name"})
+    removedOtherColumns = Table.SelectColumns(addingUkStartTime,{"UK Start Time", "MTCT Id", "MTCT Name"})
 	
 in
-	#"Removed Other Columns"
+	removedOtherColumns
