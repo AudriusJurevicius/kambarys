@@ -3,6 +3,9 @@ let
     FilterCurrentYear = Table.SelectRows(Source, each Date.IsInCurrentYear([MTCT Start Time])),
 	changingSpecificTypes = Table.TransformColumnTypes(FilterCurrentYear,{{"MTCT Buy In", type number}, {"# of seats for Qualifier(GPP)", type text}}),
 	addingUkStartTime = Table.AddColumn(changingSpecificTypes, "UK Start Time", each if [MTCT Start Time] > DateTime.From("14/03/2021 03:00:02") and [MTCT Start Time] < DateTime.From("27/03/2021  21:45:56") then [MTCT Start Time]+#duration(0,4,0,0) else [MTCT Start Time]+#duration(0,5,0,0), type datetime),
+    addingUkLrTime = Table.AddColumn(addingUkStartTime, "UK LR Time", each if [Registration End Time] > DateTime.From("14/03/2021 03:00:02") and [Registration End Time] < DateTime.From("27/03/2021  21:45:56") then [MTCT Start Time]+#duration(0,4,0,0) else [Registration End Time]+#duration(0,5,0,0), type datetime),
+    addingUkFinishTime = Table.AddColumn(addingUkLrTime, "UK Finish Time", each if [MTCT Start Time] > DateTime.From("14/03/2021 03:00:02") and [MTCT Start Time] < DateTime.From("27/03/2021  21:45:56") then [MTCT Start Time]+#duration(0,4,0,0) else [MTCT Start Time]+#duration(0,5,0,0), type datetime),
+    addingUkStartTime = Table.AddColumn(addingUkFinishTime, "UK Start Time", each if [MTCT Start Time] > DateTime.From("14/03/2021 03:00:02") and [MTCT Start Time] < DateTime.From("27/03/2021  21:45:56") then [MTCT Start Time]+#duration(0,4,0,0) else [MTCT Start Time]+#duration(0,5,0,0), type datetime),
     removedOtherColumns = Table.SelectColumns(addingUkStartTime,{"UK Start Time", "MTCT Id", "MTCT Name", "MTCT Start Time"})
 	
 in
